@@ -1,7 +1,10 @@
 import os
 import requests
 import streamlit as st
+import pickle
+import pandas as pd
 
+# --- Function to download from Google Drive ---
 def download_from_google_drive(file_id, destination):
     URL = "https://drive.google.com/uc?export=download"
     session = requests.Session()
@@ -21,7 +24,7 @@ def download_from_google_drive(file_id, destination):
             if chunk:
                 f.write(chunk)
 
-# Download similarity.pkl if not already present
+# --- Ensuring similarity.pkl exists ---
 file_id = "1mwrApO6gckn-jOeOQsTo3J8QSd8PU0fv"
 destination = "similarity.pkl"
 
@@ -30,17 +33,10 @@ if not os.path.exists(destination):
     download_from_google_drive(file_id, destination)
     st.success("Download complete!")
 
-
-
-
-
-import pickle
-import pandas as pd
-
-
-# Load the movies and similarity data
+# ---  safely load your data ---
 movies = pickle.load(open('movies.pkl', 'rb'))
 similarity = pickle.load(open('similarity.pkl', 'rb'))
+
 
 # TMDB API to get movie posters + movie info
 def fetch_movie_details(movie_id):
