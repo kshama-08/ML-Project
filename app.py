@@ -4,12 +4,13 @@ import streamlit as st
 import pickle
 import pandas as pd
 
-# --- Function to download from Google Drive ---
+# ------------------ Download Helper ------------------
 def download_from_google_drive(file_id, destination):
     URL = "https://drive.google.com/uc?export=download"
     session = requests.Session()
     response = session.get(URL, params={'id': file_id}, stream=True)
 
+    # Get confirmation token for large files
     token = None
     for key, value in response.cookies.items():
         if key.startswith('download_warning'):
@@ -19,23 +20,28 @@ def download_from_google_drive(file_id, destination):
         params = {'id': file_id, 'confirm': token}
         response = session.get(URL, params=params, stream=True)
 
+    # Check if file is actually binary (not HTML)
+    if 'text/html' in response.headers.get('Content-Type', ''):
+        raise Exception("❌ Error: Google Drive returned an HTML page. Check permissions or file ID.")
+
     with open(destination, "wb") as f:
         for chunk in response.iter_content(32768):
             if chunk:
                 f.write(chunk)
 
-# --- Ensuring similarity.pkl exists ---
+# ------------------ Ensure similarity.pkl is downloaded ------------------
 file_id = "1mwrApO6gckn-jOeOQsTo3J8QSd8PU0fv"
 destination = "similarity.pkl"
 
 if not os.path.exists(destination):
-    st.info("Downloading similarity.pkl from Google Drive...")
+    st.info("📦 Downloading similarity.pkl from Google Drive...")
     download_from_google_drive(file_id, destination)
-    st.success("Download complete!")
+    st.success("✅ similarity.pkl downloaded successfully!")
 
-# ---  safely load your data ---
-movies = pickle.load(open('movies.pkl', 'rb'))
-similarity = pickle.load(open('similarity.pkl', 'rb'))
+# ------------------ Load Your Pickled Files ------------------
+movies = pickle.load(open("movies.pkl", "rb"))
+similarity = pickle.load(open("similarity.pkl", "rb"))
+
 
 
 # TMDB API to get movie posters + movie info
