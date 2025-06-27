@@ -1,7 +1,42 @@
+import os
+import requests
 import streamlit as st
+
+def download_from_google_drive(file_id, destination):
+    URL = "https://drive.google.com/uc?export=download"
+    session = requests.Session()
+    response = session.get(URL, params={'id': file_id}, stream=True)
+
+    token = None
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            token = value
+
+    if token:
+        params = {'id': file_id, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(32768):
+            if chunk:
+                f.write(chunk)
+
+# Download similarity.pkl if not already present
+file_id = "1mwrApO6gckn-jOeOQsTo3J8QSd8PU0fv"
+destination = "similarity.pkl"
+
+if not os.path.exists(destination):
+    st.info("Downloading similarity.pkl from Google Drive...")
+    download_from_google_drive(file_id, destination)
+    st.success("Download complete!")
+
+
+
+
+
 import pickle
 import pandas as pd
-import requests
+
 
 # Load the movies and similarity data
 movies = pickle.load(open('movies.pkl', 'rb'))
